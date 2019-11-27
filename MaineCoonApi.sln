@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaineCoonApi", "MaineCoonApi\MaineCoonApi.csproj", "{1A6AE862-8591-4B36-A649-593FBD555016}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MaineCoonDataModel", "MaineCoonDataModel\MaineCoonDataModel.shproj", "{CC8EAFC1-301B-4BB2-9984-CBC9EC159BA2}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		MaineCoonDataModel\MaineCoonDataModel.projitems*{cc8eafc1-301b-4bb2-9984-cbc9ec159ba2}*SharedItemsImports = 13
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A6AE862-8591-4B36-A649-593FBD555016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A6AE862-8591-4B36-A649-593FBD555016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A6AE862-8591-4B36-A649-593FBD555016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A6AE862-8591-4B36-A649-593FBD555016}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {01187712-7EB5-49FD-8DC2-29F4B44AD3BE}
+	EndGlobalSection
+EndGlobal
