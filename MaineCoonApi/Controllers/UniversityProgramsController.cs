@@ -27,7 +27,7 @@ namespace MaineCoonApi.Controllers
         public async Task<IActionResult> Index()
         {
             var programs = from program in _context.UniversityPrograms
-                           where program.IsEnabled == true
+                           where program.IsEnabled == 0
                            join user in _context.User on program.BelongsToUserId equals user.Id
                            select new { program.Id, program.ProgramName, user.UserName, program.ProgramIntroduction, program.ProgramJson };
             return await Task.Run(() => {
@@ -45,10 +45,10 @@ namespace MaineCoonApi.Controllers
                 return NotFound();
             }
 
-            var universityProgram = await _context.UniversityPrograms.Where(a => a.IsEnabled == true)
+            var universityProgram = await _context.UniversityPrograms.Where(a => a.IsEnabled == 0)
                 .FirstOrDefaultAsync(m => m.Id == id);
             var programs = from program in _context.UniversityPrograms
-                           where (program.IsEnabled == true && program.Id == id)
+                           where (program.IsEnabled == 0 && program.Id == id)
                            join user in _context.User on program.BelongsToUserId equals user.Id
                            select new { program.Id, program.ProgramName, user.UserName, program.ProgramIntroduction, program.ProgramJson };
             if (universityProgram == null)
@@ -83,7 +83,6 @@ namespace MaineCoonApi.Controllers
             });
         }
         [HttpGet("Users/{Userid}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ListUsersAllProgram(int? Userid) {
             /////
             ///Add some auth function here
@@ -94,8 +93,8 @@ namespace MaineCoonApi.Controllers
 
             var programs = from program in _context.UniversityPrograms
                            where program.BelongsToUserId == Userid
-                           select new { program.Id,program.ProgramName,program.IsEnabled,program.Count,program.ProgramIntroduction,program.ProgramJson};
-            if (programs == null) {
+                           select new { program.Id,program.ProgramName,program.IsEnabled,program.Count,program.ProgramIntroduction};
+            if (!programs.Any()) {
                 return NotFound();
             }
             return await Task.Run(() => {
@@ -115,7 +114,7 @@ namespace MaineCoonApi.Controllers
             ////////end
             ///
             if (ModelState.IsValid) {
-                universityProgram.IsEnabled = false;
+                universityProgram.IsEnabled = 0;
                 universityProgram.IsTrainNeeded = true;
                 universityProgram.ProcesserId = -1;
                 universityProgram.BelongsToUserId = CurrentUserId;

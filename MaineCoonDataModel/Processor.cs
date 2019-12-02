@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -80,11 +83,22 @@ namespace MaineCoonApi.Models {
         /// </summary>
         [Display(Name = "Call Count")]
         public int count { get; set; }
-        [Display(Name ="Algorithm Parameter")]
-        [Required]
-        public string AlgorithmParameterJson { get; set; }
+        [Display(Name = "Algorithm Parameter")]
+        [Required, NotMapped]
+        public JArray algorithmParameterJson { get; set; } = new JArray();
         [Display(Name ="Algorithm Instroduction"),StringLength(50)]
         [Required]
-        public string Instruction { get; set; }
+        public string instruction { get; set; }
+
+
+        public string _AlgorithmParameterJson {
+            get {
+                return JsonConvert.SerializeObject(algorithmParameterJson);
+            }
+            set {
+                var t = JsonConvert.DeserializeObject<JArray>(value);
+                if (t != null) algorithmParameterJson = t;
+            }
+        }
     }
 }

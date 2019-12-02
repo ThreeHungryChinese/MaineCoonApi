@@ -34,11 +34,16 @@ namespace MaineCoonApi.Models {
         [BindNever]
         [Display(Name = "Need Train?")]
         public bool IsTrainNeeded { get; set; }
+        /// <summary>
+        /// 0 = enable, 1=DisabledByUser, 2 = Algorithm Disabled
+        /// </summary>
         [BindNever]
         [Display(Name = "IsEnabled")]
-        public bool IsEnabled { get; set; }
+        public int IsEnabled { get; set; }
 
         [Display(Name = "Program Introduction"),StringLength(50)]
         public string ProgramIntroduction { get; set; }
+
+        public string UsedProcessorsIdJson { get; set; }
     }
 }

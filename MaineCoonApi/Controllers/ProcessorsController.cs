@@ -9,15 +9,16 @@ using MaineCoonApi.Data;
 using MaineCoonApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Security.Claims;
 
 namespace MaineCoonApi.Controllers.SchoolAdmin {
 
     [ApiController]
     [Route("[controller]")]
-    public class ProcessersController : ControllerBase {
+    public class ProcessorsController : ControllerBase {
         private readonly MaineCoonApiContext _context;
 
-        public ProcessersController(MaineCoonApiContext context) {
+        public ProcessorsController(MaineCoonApiContext context) {
             _context = context;
         }
 
@@ -26,7 +27,7 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
         public async Task<string> Index() {
             var processors = from processor in  _context.Processors 
                              join user in _context.User on processor.belongsToUserID equals user.Id 
-                             select new { processor.Id, processor.friendlyName,user.UserName, processor.Instruction};
+                             select new { processor.Id, processor.friendlyName,user.UserName, processor.instruction};
 
             return await Task.Run(() => {
                 return JsonConvert.SerializeObject(processors.ToList()).Replace("\\", "");
@@ -39,30 +40,32 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             var processors = from processor in _context.Processors
                              where processor.Id==id
                              join user in _context.User on processor.belongsToUserID equals user.Id
-                             select new { processor.Id, processor.friendlyName,user.UserName, processor.Instruction,processor.AlgorithmParameterJson };
+                             select new { processor.Id, processor.friendlyName,user.UserName, processor.instruction,processor.algorithmParameterJson };
             return await Task.Run(() => {
                 return JsonConvert.SerializeObject(processors.ToList()).Replace("\\", "");
             });
         }
         // GET: Processers/Details/5
         [HttpGet("Details/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult<IEnumerable<Processor>>> Details(int? id) {
+        public async Task<IActionResult> Details(int? id) {
             /////
             ///Add some auth function here
-            var currentUserId = 4;
+            var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
+                claim => claim.Type == ClaimTypes.NameIdentifier)?.Value); 
             /////
             if (id == null) {
                 return NotFound();
             }
 
-            var processers = from p in _context.Processors
+            var processors = from p in _context.Processors
                              where (p.belongsToUserID == currentUserId && p.Id == id)
                              select p;
-            return await processers.ToArrayAsync();
+            if (!processors.Any()) {
+                return NotFound();
+            }
+                return Content(JsonConvert.SerializeObject(processors.ToList()).Replace("\\", ""));
         }
         [HttpGet("Users/{Userid}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ListUsersAllProgram(int? Userid) {
             /////
             ///Add some auth function here
@@ -73,8 +76,8 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
 
             var Processers = from p in _context.Processors
                              where p.belongsToUserID == Userid
-                             select new { p.Id, p.friendlyName, p.Instruction, p.AlgorithmParameterJson };
-            if (Processers == null) {
+                             select new { p.Id, p.friendlyName, p.instruction, p.count };
+            if (Processers.Count()==0) {
                 return NotFound();
             }
             return await Task.Run(()=> { 

@@ -27,24 +27,10 @@ namespace MaineCoonApi {
         public void ConfigureServices(IServiceCollection services) {
             services.AddRazorPages();
             
-            services.AddRazorPages().AddRazorPagesOptions(options => {
-                //options.Conventions.AuthorizeFolder("/");
-                foreach (var role in Enum.GetValues(typeof(Models.User.role))) {
-                    //Set Auth Role for every folder
-                    options.Conventions.AuthorizeFolder("/" + role.ToString(), "Is" + role.ToString());
-                }
-                options.Conventions.AllowAnonymousToPage("/Index");
-                options.Conventions.AllowAnonymousToPage("/Signin");
-                options.Conventions.AllowAnonymousToPage("/Signup");
-            });
-
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => {
-                    options.LoginPath = "/Signin";
-                    options.LogoutPath = "/Account/LogOff";
-                    options.ExpireTimeSpan = TimeSpan.FromSeconds(60);
+                    options.ExpireTimeSpan = TimeSpan.FromSeconds(120);
                     options.SlidingExpiration = true;
-                    options.AccessDeniedPath = "/Signin";
                 });
 
             //Add role Requirements
@@ -52,7 +38,6 @@ namespace MaineCoonApi {
                 foreach (var role in Enum.GetValues(typeof(Models.User.role))) {
                     options.AddPolicy("Is" + role.ToString(), policy =>
                     policy.RequireClaim(ClaimTypes.Role, role.ToString()));
-
                 }
             });
 
@@ -73,17 +58,17 @@ namespace MaineCoonApi {
                 app.UseHsts();
             }
             app.UseCors(options => {
-                options.WithOrigins("http://localhost:11117").SetIsOriginAllowedToAllowWildcardSubdomains().AllowCredentials();
+                options.WithOrigins("http://localhost:11117").AllowCredentials();
+                options.WithOrigins("http://localhost:8080").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
                 options.AllowAnyMethod();
-                options.AllowAnyHeader();
             });
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
 
-            //app.UseAuthentication();
-            //app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllers();
