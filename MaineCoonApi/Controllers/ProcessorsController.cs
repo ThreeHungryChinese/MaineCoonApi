@@ -172,9 +172,8 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
                 return BadRequest();
             }
         }
-        // POST: Processerss/Delete/5
-        [HttpDelete("Delete/{id}")]
-        [ValidateAntiForgeryToken]
+        // POST: Processerss/5
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteConfirmed(int id) {
             /////Authorize User
 
