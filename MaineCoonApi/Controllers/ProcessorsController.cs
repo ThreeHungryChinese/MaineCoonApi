@@ -10,6 +10,7 @@ using MaineCoonApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
+using System.IO;
 
 namespace MaineCoonApi.Controllers.SchoolAdmin {
 
@@ -51,7 +52,7 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             /////
             ///Add some auth function here
             var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
-                claim => claim.Type == ClaimTypes.NameIdentifier)?.Value); 
+                claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
             /////
             if (id == null) {
                 return NotFound();
@@ -59,7 +60,17 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
 
             var processors = from p in _context.Processors
                              where (p.belongsToUserID == currentUserId && p.Id == id)
-                             select p;
+                             select new { 
+                                 p.Id,
+                                 p.friendlyName,
+                                 p.instruction,
+                                 p.trainCallbackURL,
+                                 p.resetURL,
+                                 p.getResultURL,
+                                 p.isGetResultNeedWaitCallback,
+                                 p.TLSversion,
+                                 p.algorithmParameterJson
+                             };
             if (!processors.Any()) {
                 return NotFound();
             }
@@ -85,27 +96,84 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             });
         }
 
-        // POST: Processerss/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost("Create"), ActionName("Create")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("friendlyName","trainCallbackURL", "getResultURL", "isGetResultNeedWaitCallback", "resetURL", "TLSversion", "publicKey", "AlgorithmParameterJson", "Instruction")] Processor Processer) {
-            /////////some function to get current User Id
-            var CurrentUserId = 4;
-            ////////end
-            ///
-            if (ModelState.IsValid) {
-                Processer.belongsToUserID = CurrentUserId;
-                Processer.count = 0;
-                _context.Add(Processer);
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Edit(int id) {
+            try {
+                var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
+                    claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
+                if (currentUserId == 0) return BadRequest();
+                var Processers = from p in _context.Processors
+                                 where p.belongsToUserID == currentUserId && p.Id==id
+                                 select new { p.Id, p.friendlyName, p.instruction, p.count };
+                if (!Processers.Any()) {
+                    throw new Exception("Not belongs to this user!");
+                }
+                string resquestInfoJson;
+                using (var reader = new StreamReader(Request.Body)) {
+                    resquestInfoJson = await reader.ReadToEndAsync();
+                }
+                var processorInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
+                var processor = new Processor {
+                    Id = id,
+                    friendlyName = processorInfo.Value<string>("friendlyName"),
+                    instruction = processorInfo.Value<string>("instruction"),
+                    trainCallbackURL = new Uri(processorInfo.Value<string>("trainCallbackURL")),
+                    resetURL = new Uri(processorInfo.Value<string>("resetURL")),
+                    getResultURL = new Uri(processorInfo.Value<string>("getResultURL")),
+                    isGetResultNeedWaitCallback = processorInfo.Value<bool>("isGetResultNeedWaitCallback"),
+                    TLSversion = (Processor.TLSVersion)processorInfo.Value<int>("TLSversion"),
+                    algorithmParameterJson = processorInfo.Value<JArray>("algorithmParameterJson"),
+                    belongsToUserID = currentUserId
+                };
+                _context.Entry(processor).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 return Ok();
             }
-            return BadRequest();
+            catch {
+
+                return BadRequest();
+            }
+        }
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create() {
+            try {
+                string resquestInfoJson;
+                using (var reader = new StreamReader(Request.Body)) {
+                    resquestInfoJson = await reader.ReadToEndAsync();
+                }
+                var processorInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
+
+                var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
+                    claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
+                if (currentUserId == 0) return BadRequest();
+                var Processers = from p in _context.Processors
+                                 where p.belongsToUserID == currentUserId && p.friendlyName == processorInfo.Value<string>("processorInfo")
+                                 select p;
+                if (Processers.Any()) {
+                    throw new Exception("Existed!");
+                }
+                var processor = new Processor {
+                    friendlyName = processorInfo.Value<string>("friendlyName"),
+                    instruction = processorInfo.Value<string>("instruction"),
+                    trainCallbackURL = new Uri(processorInfo.Value<string>("trainCallbackURL")),
+                    resetURL = new Uri(processorInfo.Value<string>("resetURL")),
+                    getResultURL = new Uri(processorInfo.Value<string>("getResultURL")),
+                    isGetResultNeedWaitCallback = processorInfo.Value<bool>("isGetResultNeedWaitCallback"),
+                    TLSversion = (Processor.TLSVersion)processorInfo.Value<int>("TLSversion"),
+                    algorithmParameterJson = processorInfo.Value<JArray>("algorithmParameterJson"),
+                    belongsToUserID = currentUserId
+                };
+                _context.Add(processor);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch {
+
+                return BadRequest();
+            }
         }
         // POST: Processerss/Delete/5
-        [HttpPost("Delete/{id}"), ActionName("Delete")]
+        [HttpDelete("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id) {
             /////Authorize User
@@ -116,8 +184,8 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             await _context.SaveChangesAsync();
             return Ok();
         }
-
-        private bool ProcessersExists(int id) {
+        
+            private bool ProcessersExists(int id) {
             return _context.Processors.Any(e => e.Id == id);
         }
         /*

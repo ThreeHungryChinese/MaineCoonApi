@@ -71,7 +71,6 @@ namespace MaineCoonApi.Models {
         /// 
         /// </summary>
         [Display(Name = "token")]
-        [Required]
         public string publicKey { get; set; }
         /// <summary>
         /// 
