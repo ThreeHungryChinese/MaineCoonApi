@@ -87,7 +87,11 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
 
             var Processers = from p in _context.Processors
                              where p.belongsToUserID == Userid
-                             select new { p.Id, p.friendlyName, p.instruction, p.count };
+                             select new { 
+                                 Id=p.Id, 
+                                 name = p.friendlyName, 
+                                 instruction = p.instruction, 
+                                 count = p.count };
             return await Task.Run(()=> { 
                 return Content(JsonConvert.SerializeObject(Processers.ToList()).Replace("\\",""));
             });
