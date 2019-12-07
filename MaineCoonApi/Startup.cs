@@ -29,7 +29,7 @@ namespace MaineCoonApi {
             
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => {
-                    options.ExpireTimeSpan = TimeSpan.FromSeconds(120);
+                    options.ExpireTimeSpan = TimeSpan.FromHours(2);
                     options.SlidingExpiration = true;
                 });
 

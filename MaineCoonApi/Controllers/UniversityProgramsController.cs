@@ -9,6 +9,8 @@ using MaineCoonApi.Data;
 using MaineCoonApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Security.Claims;
+using System.IO;
 
 namespace MaineCoonApi.Controllers
 {
@@ -22,65 +24,55 @@ namespace MaineCoonApi.Controllers
             _context = context;
         }
 
-        // GET: UniversityPrograms
+        // GET: Processers
         [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            var programs = from program in _context.UniversityPrograms
-                           where program.IsEnabled == 0
-                           join user in _context.User on program.BelongsToUserId equals user.Id
-                           select new { program.Id, program.ProgramName, user.UserName, program.ProgramIntroduction, program.ProgramJson };
+        public async Task<string> Index() {
+            var programs = from p in _context.UniversityPrograms
+                             join user in _context.User on p.belongsToUserID equals user.Id
+                             select new { p.Id, p.ProgramName, user.UserName, p.ProgramIntroduction };
+
             return await Task.Run(() => {
-                return Content(JsonConvert.SerializeObject(programs.ToList()).Replace("\\",""));
+                return JsonConvert.SerializeObject(programs.ToList()).Replace("\\", "");
             });
 
         }
-
-        // GET: UniversityPrograms/List/5
+        // GET: Processers/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> List(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var universityProgram = await _context.UniversityPrograms.Where(a => a.IsEnabled == 0)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            var programs = from program in _context.UniversityPrograms
-                           where (program.IsEnabled == 0 && program.Id == id)
-                           join user in _context.User on program.BelongsToUserId equals user.Id
-                           select new { program.Id, program.ProgramName, user.UserName, program.ProgramIntroduction, program.ProgramJson };
-            if (universityProgram == null)
-            {
-                return NotFound();
-            }
-
+        public async Task<string> List(int? id) {
+            var programs = from p in _context.UniversityPrograms
+                             where p.Id == id
+                             join user in _context.User on p.belongsToUserID equals user.Id
+                             select new { p.Id, p.ProgramName, user.UserName, p.ProgramIntroduction, p.ProgramJson };
             return await Task.Run(() => {
-                return Content(JsonConvert.SerializeObject(programs.ToList()).Replace("\\", ""));
+                return JsonConvert.SerializeObject(programs.ToList()).Replace("\\", "");
             });
         }
-        // GET: UniversityPrograms/Details/5
+        // GET: Processers/Details/5
         [HttpGet("Details/{id}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Details(int? id) {
             /////
             ///Add some auth function here
-            var currentUserId=4;
+            var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
+                claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
             /////
             if (id == null) {
                 return NotFound();
             }
-            var programs = from program in _context.UniversityPrograms
-                           where (program.BelongsToUserId==currentUserId && program.Id == id)
-                           join user in _context.User on program.BelongsToUserId equals user.Id
-                           select program;
-            if (programs == null) {
+
+            var programs = from p in _context.UniversityPrograms
+                             where (p.belongsToUserID == currentUserId && p.Id == id)
+                             select new {
+                                 p.Id,
+                                 p.ProgramName,
+                                 p.ProgramIntroduction,
+                                 p.ProgramJson,
+                                 p.UsedProcessorsIdJson,
+                                 p.programParameterJson
+                             };
+            if (!programs.Any()) {
                 return NotFound();
             }
-            return await Task.Run(() => {
-                return Content(JsonConvert.SerializeObject(programs.ToList()).Replace("\\", ""));
-            });
+            return Content(JsonConvert.SerializeObject(programs.ToList()).Replace("\\", ""));
         }
         [HttpGet("Users/{Userid}")]
         public async Task<IActionResult> ListUsersAllProgram(int? Userid) {
@@ -91,10 +83,10 @@ namespace MaineCoonApi.Controllers
                 return NotFound();
             }
 
-            var programs = from program in _context.UniversityPrograms
-                           where program.BelongsToUserId == Userid
-                           select new { program.Id,program.ProgramName,program.IsEnabled,program.Count,program.ProgramIntroduction};
-            if (!programs.Any()) {
+            var programs = from p in _context.UniversityPrograms
+                             where p.belongsToUserID == Userid
+                             select new { p.Id, p.ProgramName, p.ProgramIntroduction, p.Count };
+            if (programs.Count() == 0) {
                 return NotFound();
             }
             return await Task.Run(() => {
@@ -102,43 +94,96 @@ namespace MaineCoonApi.Controllers
             });
         }
 
-        // POST: UniversityPrograms/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost("Create"), ActionName("Create")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProgramName,ProgramJson,IsTrainNeeded,ProgramIntroduction")] UniversityProgram universityProgram)
-        {
-            /////////some function to get current User Id
-            var CurrentUserId = 4;
-            ////////end
-            ///
-            if (ModelState.IsValid) {
-                universityProgram.IsEnabled = 0;
-                universityProgram.IsTrainNeeded = true;
-                universityProgram.ProcesserId = -1;
-                universityProgram.BelongsToUserId = CurrentUserId;
-                universityProgram.BelongsToUserId = 0;
-                _context.Add(universityProgram);
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Edit(int id) {
+            try {
+                var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
+                    claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
+                if (currentUserId == 0) return BadRequest();
+                var Processers = from p in _context.Processors
+                                 where p.belongsToUserID == currentUserId && p.Id == id
+                                 select new { p.Id, p.friendlyName, p.instruction, p.count };
+                if (!Processers.Any()) {
+                    throw new Exception("Not belongs to this user!");
+                }
+                string resquestInfoJson;
+                using (var reader = new StreamReader(Request.Body)) {
+                    resquestInfoJson = await reader.ReadToEndAsync();
+                }
+                var processorInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
+                var processor = new Processor {
+                    Id = id,
+                    friendlyName = processorInfo.Value<string>("friendlyName"),
+                    instruction = processorInfo.Value<string>("instruction"),
+                    trainCallbackURL = new Uri(processorInfo.Value<string>("trainCallbackURL")),
+                    resetURL = new Uri(processorInfo.Value<string>("resetURL")),
+                    getResultURL = new Uri(processorInfo.Value<string>("getResultURL")),
+                    isGetResultNeedWaitCallback = processorInfo.Value<bool>("isGetResultNeedWaitCallback"),
+                    TLSversion = (Processor.TLSVersion)processorInfo.Value<int>("TLSversion"),
+                    algorithmParameterJson = processorInfo.Value<JArray>("algorithmParameterJson"),
+                    belongsToUserID = currentUserId
+                };
+                _context.Entry(processor).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 return Ok();
             }
-            return BadRequest();
-        }        
-        // POST: UniversityPrograms/Delete/5
-        [HttpPost("Delete/{id}"), ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+            catch {
+
+                return BadRequest();
+            }
+        }
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create() {
+            try {
+                string resquestInfoJson;
+                using (var reader = new StreamReader(Request.Body)) {
+                    resquestInfoJson = await reader.ReadToEndAsync();
+                }
+                var processorInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
+
+                var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
+                    claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
+                if (currentUserId == 0) return BadRequest();
+                var Processers = from p in _context.Processors
+                                 where p.belongsToUserID == currentUserId && p.friendlyName == processorInfo.Value<string>("processorInfo")
+                                 select p;
+                if (Processers.Any()) {
+                    throw new Exception("Existed!");
+                }
+                var processor = new Processor {
+                    friendlyName = processorInfo.Value<string>("friendlyName"),
+                    instruction = processorInfo.Value<string>("instruction"),
+                    trainCallbackURL = new Uri(processorInfo.Value<string>("trainCallbackURL")),
+                    resetURL = new Uri(processorInfo.Value<string>("resetURL")),
+                    getResultURL = new Uri(processorInfo.Value<string>("getResultURL")),
+                    isGetResultNeedWaitCallback = processorInfo.Value<bool>("isGetResultNeedWaitCallback"),
+                    TLSversion = (Processor.TLSVersion)processorInfo.Value<int>("TLSversion"),
+                    algorithmParameterJson = processorInfo.Value<JArray>("algorithmParameterJson"),
+                    belongsToUserID = currentUserId
+                };
+                _context.Add(processor);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch {
+
+                return BadRequest();
+            }
+        }
+        // POST: Processerss/5
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteConfirmed(int id) {
             /////Authorize User
-            
             /////
-            var universityProgram = await _context.UniversityPrograms.FindAsync(id);
-            _context.UniversityPrograms.Remove(universityProgram);
+            if (id <= 0) return BadRequest();
+            var program = await _context.UniversityPrograms.FindAsync(id);
+            _context.UniversityPrograms.Remove(program);
             await _context.SaveChangesAsync();
             return Ok();
         }
-        private bool UniversityProgramExists(int id) {
-            return _context.UniversityPrograms.Any(e => e.Id == id);
+
+        private bool ProgramExists(int id) {
+            return _context.Processors.Any(e => e.Id == id);
         }
         /*
 

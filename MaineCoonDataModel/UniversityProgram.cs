@@ -17,7 +17,7 @@ namespace MaineCoonApi.Models {
         public string ProgramName { get; set; }
 
         [Display(Name ="UserId")]
-        public int BelongsToUserId { get; set; }
+        public int belongsToUserID { get; set; }
 
         [Display(Name ="Admission Process Setting")]
         public string ProgramJson { get; set; }
@@ -45,5 +45,6 @@ namespace MaineCoonApi.Models {
         public string ProgramIntroduction { get; set; }
 
         public string UsedProcessorsIdJson { get; set; }
+        public string programParameterJson { get; set; }
     }
 }

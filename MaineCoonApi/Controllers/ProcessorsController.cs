@@ -88,9 +88,6 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             var Processers = from p in _context.Processors
                              where p.belongsToUserID == Userid
                              select new { p.Id, p.friendlyName, p.instruction, p.count };
-            if (Processers.Count()==0) {
-                return NotFound();
-            }
             return await Task.Run(()=> { 
                 return Content(JsonConvert.SerializeObject(Processers.ToList()).Replace("\\",""));
             });
@@ -178,6 +175,7 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             /////Authorize User
 
             /////
+            if (id <= 0) return BadRequest();
             var Processers = await _context.Processors.FindAsync(id);
             _context.Processors.Remove(Processers);
             await _context.SaveChangesAsync();
