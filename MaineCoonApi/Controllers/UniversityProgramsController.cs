@@ -67,7 +67,7 @@ namespace MaineCoonApi.Controllers
                                  p.ProgramIntroduction,
                                  p.ProgramJson,
                                  p.UsedProcessorsIdJson,
-                                 p.programParameterJson
+                                 p.ProgramParameterJson
                              };
             if (!programs.Any()) {
                 return NotFound();
@@ -84,8 +84,13 @@ namespace MaineCoonApi.Controllers
             }
 
             var programs = from p in _context.UniversityPrograms
-                             where p.belongsToUserID == Userid
-                             select new { p.Id, p.ProgramName, p.ProgramIntroduction, p.Count };
+                           where p.belongsToUserID == Userid
+                           select new {
+                               id = p.Id,
+                               name = p.ProgramName,
+                               instruction = p.ProgramIntroduction,
+                               count = p.Count
+                           };
             if (programs.Count() == 0) {
                 return NotFound();
             }
@@ -100,30 +105,27 @@ namespace MaineCoonApi.Controllers
                 var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
                     claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
                 if (currentUserId == 0) return BadRequest();
-                var Processers = from p in _context.Processors
+                var programs = from p in _context.UniversityPrograms
                                  where p.belongsToUserID == currentUserId && p.Id == id
-                                 select new { p.Id, p.friendlyName, p.instruction, p.count };
-                if (!Processers.Any()) {
+                                 select p;
+                if (!programs.Any()) {
                     throw new Exception("Not belongs to this user!");
                 }
                 string resquestInfoJson;
                 using (var reader = new StreamReader(Request.Body)) {
                     resquestInfoJson = await reader.ReadToEndAsync();
                 }
-                var processorInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
-                var processor = new Processor {
-                    Id = id,
-                    friendlyName = processorInfo.Value<string>("friendlyName"),
-                    instruction = processorInfo.Value<string>("instruction"),
-                    trainCallbackURL = new Uri(processorInfo.Value<string>("trainCallbackURL")),
-                    resetURL = new Uri(processorInfo.Value<string>("resetURL")),
-                    getResultURL = new Uri(processorInfo.Value<string>("getResultURL")),
-                    isGetResultNeedWaitCallback = processorInfo.Value<bool>("isGetResultNeedWaitCallback"),
-                    TLSversion = (Processor.TLSVersion)processorInfo.Value<int>("TLSversion"),
-                    algorithmParameterJson = processorInfo.Value<JArray>("algorithmParameterJson"),
-                    belongsToUserID = currentUserId
-                };
-                _context.Entry(processor).State = EntityState.Modified;
+                var programInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
+                var program = programs.FirstOrDefault();
+                program.ProgramName = programInfo.Value<string>("ProgramName");
+                program.ProgramIntroduction = programInfo.Value<string>("ProgramIntroduction");
+                program.ProgramParameterJson = programInfo.Value<JArray>("ProgramParameterJson");
+                program.ProgramJson = programInfo.Value<JArray>("ProgramJson");
+                foreach (var item in program.ProgramJson.Values()) {
+                    program.UsedProcessorsIdJson.Add(item.Value<int>("id"));
+                }
+
+                _context.Entry(program).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 return Ok();
             }
@@ -139,29 +141,33 @@ namespace MaineCoonApi.Controllers
                 using (var reader = new StreamReader(Request.Body)) {
                     resquestInfoJson = await reader.ReadToEndAsync();
                 }
-                var processorInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
+                var programInfo = JsonConvert.DeserializeObject<JObject>(resquestInfoJson);
 
                 var currentUserId = Convert.ToInt32(HttpContext.User.Claims.FirstOrDefault(
                     claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
                 if (currentUserId == 0) return BadRequest();
-                var Processers = from p in _context.Processors
-                                 where p.belongsToUserID == currentUserId && p.friendlyName == processorInfo.Value<string>("processorInfo")
+                var programs = from p in _context.UniversityPrograms
+                                 where p.belongsToUserID == currentUserId && p.ProgramName == programInfo.Value<string>("ProgramName")
                                  select p;
-                if (Processers.Any()) {
+                if (programs.Any()) {
                     throw new Exception("Existed!");
                 }
-                var processor = new Processor {
-                    friendlyName = processorInfo.Value<string>("friendlyName"),
-                    instruction = processorInfo.Value<string>("instruction"),
-                    trainCallbackURL = new Uri(processorInfo.Value<string>("trainCallbackURL")),
-                    resetURL = new Uri(processorInfo.Value<string>("resetURL")),
-                    getResultURL = new Uri(processorInfo.Value<string>("getResultURL")),
-                    isGetResultNeedWaitCallback = processorInfo.Value<bool>("isGetResultNeedWaitCallback"),
-                    TLSversion = (Processor.TLSVersion)processorInfo.Value<int>("TLSversion"),
-                    algorithmParameterJson = processorInfo.Value<JArray>("algorithmParameterJson"),
-                    belongsToUserID = currentUserId
+                var program = new UniversityProgram {
+                    belongsToUserID = currentUserId,
+                    Count = 0,
+                    IsTrainNeeded = true,
+                    IsEnabled=0,
+                    ProgramName = programInfo.Value<string>("ProgramName"),
+                    ProgramIntroduction = programInfo.Value<string>("ProgramIntroduction"),
+                    ProgramParameterJson = programInfo.Value<JArray>("ProgramParameterJson"),
+                    ProgramJson = programInfo.Value<JArray>("ProgramJson"),
                 };
-                _context.Add(processor);
+                foreach (var item in program.ProgramJson.Values()) {
+                    program.UsedProcessorsIdJson.Add(item.Value<int>("id"));
+                }
+
+
+                _context.Add(program);
                 await _context.SaveChangesAsync();
                 return Ok();
             }

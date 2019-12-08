@@ -88,7 +88,7 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             var Processers = from p in _context.Processors
                              where p.belongsToUserID == Userid
                              select new { 
-                                 Id=p.Id, 
+                                 id=p.Id, 
                                  name = p.friendlyName, 
                                  instruction = p.instruction, 
                                  count = p.count };
@@ -104,8 +104,8 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
                     claim => claim.Type == ClaimTypes.NameIdentifier)?.Value);
                 if (currentUserId == 0) return BadRequest();
                 var Processers = from p in _context.Processors
-                                 where p.belongsToUserID == currentUserId && p.Id==id
-                                 select new { p.Id, p.friendlyName, p.instruction, p.count };
+                                 where p.belongsToUserID == currentUserId && p.Id == id
+                                 select p;
                 if (!Processers.Any()) {
                     throw new Exception("Not belongs to this user!");
                 }
