@@ -28,7 +28,13 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
         public async Task<string> Index() {
             var processors = from processor in  _context.Processors 
                              join user in _context.User on processor.belongsToUserID equals user.Id 
-                             select new { processor.Id, processor.friendlyName,user.UserName, processor.instruction};
+                             select new { 
+                                 id = processor.Id, 
+                                 name = processor.friendlyName,
+                                 userName = user.UserName,
+                                 instruction = processor.instruction,
+                                 processor.algorithmParameterJson
+                             };
 
             return await Task.Run(() => {
                 return JsonConvert.SerializeObject(processors.ToList()).Replace("\\", "");
@@ -41,7 +47,13 @@ namespace MaineCoonApi.Controllers.SchoolAdmin {
             var processors = from processor in _context.Processors
                              where processor.Id==id
                              join user in _context.User on processor.belongsToUserID equals user.Id
-                             select new { processor.Id, processor.friendlyName,user.UserName, processor.instruction,processor.algorithmParameterJson };
+                             select new {
+                                 id = processor.Id,
+                                 name = processor.friendlyName,
+                                 user.UserName,
+                                 processor.instruction,
+                                 processor.algorithmParameterJson
+                             };
             return await Task.Run(() => {
                 return JsonConvert.SerializeObject(processors.ToList()).Replace("\\", "");
             });

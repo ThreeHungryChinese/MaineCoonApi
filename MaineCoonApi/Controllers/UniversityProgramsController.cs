@@ -122,7 +122,7 @@ namespace MaineCoonApi.Controllers
                 program.ProgramParameterJson = programInfo.Value<JArray>("ProgramParameterJson");
                 program.ProgramJson = programInfo.Value<JArray>("ProgramJson");
                 foreach (var item in program.ProgramJson.Values()) {
-                    program.UsedProcessorsIdJson.Add(item.Value<int>("id"));
+                    program.UsedProcessorsIdJson.Add(item.Value<int>("processorId"));
                 }
 
                 _context.Entry(program).State = EntityState.Modified;
@@ -163,7 +163,7 @@ namespace MaineCoonApi.Controllers
                     ProgramJson = programInfo.Value<JArray>("ProgramJson"),
                 };
                 foreach (var item in program.ProgramJson.Values()) {
-                    program.UsedProcessorsIdJson.Add(item.Value<int>("id"));
+                    program.UsedProcessorsIdJson.Add(item.Value<int>("processorId"));
                 }
 
 
