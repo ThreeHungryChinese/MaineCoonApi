@@ -29,7 +29,11 @@ namespace MaineCoonApi.Controllers
         public async Task<string> Index() {
             var programs = from p in _context.UniversityPrograms
                              join user in _context.User on p.belongsToUserID equals user.Id
-                             select new { p.Id, p.ProgramName, user.UserName, p.ProgramIntroduction };
+                             select new { 
+                                 id = p.Id, 
+                                 name = p.ProgramName, 
+                                 userName = user.UserName,
+                                 instruction = p.ProgramIntroduction };
 
             return await Task.Run(() => {
                 return JsonConvert.SerializeObject(programs.ToList()).Replace("\\", "");
@@ -39,12 +43,20 @@ namespace MaineCoonApi.Controllers
         // GET: Processers/5
         [HttpGet("{id}")]
         public async Task<string> List(int? id) {
+            /*
             var programs = from p in _context.UniversityPrograms
                              where p.Id == id
                              join user in _context.User on p.belongsToUserID equals user.Id
                              select new { p.Id, p.ProgramName, user.UserName, p.ProgramIntroduction, p.ProgramJson };
             return await Task.Run(() => {
                 return JsonConvert.SerializeObject(programs.ToList()).Replace("\\", "");
+            });*/
+            var programs = from p in _context.UniversityPrograms
+                           where p.Id == id
+                           join user in _context.User on p.belongsToUserID equals user.Id
+                           select new {p.ProgramParameterJson };
+            return await Task.Run(() => {
+                return JsonConvert.SerializeObject(programs.FirstOrDefault().ProgramParameterJson.ToList());
             });
         }
         // GET: Processers/Details/5
@@ -159,10 +171,9 @@ namespace MaineCoonApi.Controllers
                     ProgramIntroduction = programInfo.Value<string>("ProgramIntroduction"),
                     ProgramParameterJson = programInfo.Value<JArray>("ProgramParameterJson"),
                     ProgramJson = programInfo.Value<JArray>("ProgramJson"),
-                };
-                foreach (var item in program.ProgramJson.Values()) {
-                    program.UsedProcessorsIdJson.Add(item.Value<int>("processorId"));
-                }
+                    UsedProcessorsIdJson = programInfo.Value<JArray>("processorId")
+            };
+                
 
 
                 _context.Add(program);

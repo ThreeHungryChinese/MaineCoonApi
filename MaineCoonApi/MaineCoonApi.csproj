@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\WeatherForecastController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\MaineCoonDataModel\Card.cs" Link="Model\Card.cs" />
     <Compile Include="..\MaineCoonDataModel\DataType.cs" Link="Model\DataType.cs" />
     <Compile Include="..\MaineCoonDataModel\EncryptionMethod.cs" Link="Model\EncryptionMethod.cs" />
