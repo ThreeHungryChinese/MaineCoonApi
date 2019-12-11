@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using MaineCoonApi.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace MaineCoonApi {
     public class Startup {
@@ -31,6 +32,7 @@ namespace MaineCoonApi {
                 .AddCookie(options => {
                     options.ExpireTimeSpan = TimeSpan.FromHours(2);
                     options.SlidingExpiration = true;
+                    options.Cookie.SameSite = SameSiteMode.None;
                 });
 
             //Add role Requirements
@@ -58,8 +60,9 @@ namespace MaineCoonApi {
                 app.UseHsts();
             }
             app.UseCors(options => {
-                options.WithOrigins("http://localhost:11117").AllowCredentials();
+                options.WithOrigins("http://127.0.0.1:8080").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
                 options.WithOrigins("http://localhost:8080").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
+                options.WithOrigins("https://threehungrychinese.github.io").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
                 options.AllowAnyMethod();
             });
 
