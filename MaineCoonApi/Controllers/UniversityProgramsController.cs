@@ -133,7 +133,7 @@ namespace MaineCoonApi.Controllers
                 program.ProgramIntroduction = programInfo.Value<string>("ProgramIntroduction");
                 program.ProgramParameterJson = programInfo.Value<JArray>("ProgramParameterJson");
                 program.ProgramJson = programInfo.Value<JArray>("ProgramJson");
-                program.UsedProcessorsIdJson= programInfo.Value<JArray>("usedProcessorId");
+                program.UsedProcessorsIdJson= programInfo.Value<JArray>("usedProcessorsId");
 
                 _context.Entry(program).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
@@ -171,7 +171,7 @@ namespace MaineCoonApi.Controllers
                     ProgramIntroduction = programInfo.Value<string>("ProgramIntroduction"),
                     ProgramParameterJson = programInfo.Value<JArray>("ProgramParameterJson"),
                     ProgramJson = programInfo.Value<JArray>("ProgramJson"),
-                    UsedProcessorsIdJson = programInfo.Value<JArray>("processorId")
+                    UsedProcessorsIdJson = programInfo.Value<JArray>("usedProcessorsId")
             };
                 
 
