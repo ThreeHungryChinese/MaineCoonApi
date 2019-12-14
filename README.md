@@ -5,7 +5,7 @@
  
  Provide services to all comptiable client application
  
- ## Check a web application using this Api
+ ## Check a web application using this Api Service
  
  https://github.com/ThreeHungryChinese/MaineCoonUi
  
