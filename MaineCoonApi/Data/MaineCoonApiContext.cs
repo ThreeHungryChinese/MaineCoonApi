@@ -12,7 +12,7 @@ namespace MaineCoonApi.Data {
 
         public DbSet<MaineCoonApi.Models.StudentScore> StudentScore { get; set; }
 
-        public DbSet<MaineCoonApi.Models.QuestRecord> QuestRecord { get; set; }
+        //public DbSet<MaineCoonApi.Models.QuestRecord> QuestRecord { get; set; }
         public DbSet<MaineCoonApi.Models.User> User { get; set; }
         public DbSet<MaineCoonApi.Models.Processor> Processors { get; set; }
         public DbSet<MaineCoonApi.Models.UniversityProgram> UniversityPrograms { get; set; }

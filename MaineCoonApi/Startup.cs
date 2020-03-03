@@ -46,7 +46,7 @@ namespace MaineCoonApi {
             services.AddCors();
 
             services.AddDbContext<MaineCoonApiContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("DatabaseConnectionString")));
+                    options.UseSqlite("Data Source=data.db"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,7 +61,7 @@ namespace MaineCoonApi {
             }
             app.UseCors(options => {
                 options.WithOrigins("http://127.0.0.1:8080").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
-                options.WithOrigins("http://localhost:8080").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
+                options.WithOrigins("http://localhost:8081").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
                 options.WithOrigins("https://threehungrychinese.github.io").AllowCredentials().AllowAnyHeader().AllowAnyMethod();
                 options.AllowAnyMethod();
             });

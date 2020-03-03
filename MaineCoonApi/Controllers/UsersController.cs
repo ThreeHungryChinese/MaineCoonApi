@@ -40,6 +40,17 @@ namespace MaineCoonApi.Controllers
                     Console.WriteLine(userInfoJson);
                     var userInfo = JsonConvert.DeserializeObject<Dictionary<string, string>>(userInfoJson);
                     User existedUser = _context.User.Where(usr => usr.email == userInfo["userName"]).FirstOrDefault();
+                    /*
+                    User newuser = new User();
+                    newuser.registionTime = DateTime.UtcNow;
+                    newuser.sysRole = Models.User.role.Developer;
+                    newuser.accountStatus = Models.User.status.Valid;
+                    newuser.UserName = userInfo["userName"];
+                    newuser.email = userInfo["userName"];
+                    newuser.SALT = hasher.Key;
+                    newuser.password = hasher.ComputeHash(Encoding.UTF8.GetBytes(userInfo["passWord"]));
+                    _context.User.Add(newuser);
+                    _context.SaveChanges();*/
                     if (existedUser != null) {
                         hasher.Key = existedUser.SALT;
                         byte[] password = hasher.ComputeHash(Encoding.UTF8.GetBytes(userInfo["passWord"]));
