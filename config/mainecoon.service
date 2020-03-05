@@ -1,0 +1,13 @@
+[Unit]
+Description=MaineCoon Api
+After=network.target
+StartLimitIntervalSec=5
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=ubuntu
+ExecStart=/usr/bin/dotnet /home/ubuntu/silverlobster/MaineCoonApi.dll
+
+[Install]
+WantedBy=multi-user.target

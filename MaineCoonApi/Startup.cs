@@ -66,7 +66,7 @@ namespace MaineCoonApi {
                 options.AllowAnyMethod();
             });
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
 
